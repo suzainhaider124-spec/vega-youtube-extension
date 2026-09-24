@@ -2,7 +2,7 @@
   {
     "display_name": "YouTube Provider",
     "value": "youtube-provider",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
     "description": "YouTube provider using public Invidious instances",
     "type": "global",

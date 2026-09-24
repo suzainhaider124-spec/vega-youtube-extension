@@ -24,21 +24,47 @@ export const getStream = async function ({
 
   for (const instance of INVIDIOUS_INSTANCES) {
     try {
-      const response = await providerContext.axios.get(`${instance}/api/v1/videos/${encodeURIComponent(videoId)}`, { signal, timeout: 15000 });
+      const response = await providerContext.axios.get(
+        `${instance}/api/v1/videos/${encodeURIComponent(videoId)}`,
+        { signal, timeout: 15000 },
+      );
       const data = response.data || {};
       const streams: Stream[] = [];
-      if (data.hlsUrl) streams.push({ server: "Invidious HLS", link: data.hlsUrl, type: "m3u8", quality: "Auto" });
 
-      for (const source of Array.isArray(data.formatStreams) ? data.formatStreams : []) {
-        if (source.url && (source.type || "").toLowerCase().includes("video/mp4")) {
-          streams.push({ server: "Invidious MP4", link: source.url, type: "mp4", quality: source.qualityLabel || source.quality || "Auto" });
+      const hls = data.hlsUrl || data.hls;
+      if (typeof hls === "string" && hls.length > 0) {
+        streams.push({ server: "Invidious HLS", link: hls, type: "m3u8", quality: "Auto" });
+      }
+
+      const sources = [
+        ...(Array.isArray(data.formatStreams) ? data.formatStreams : []),
+        ...(Array.isArray(data.adaptiveFormats) ? data.adaptiveFormats : []),
+        ...(Array.isArray(data.videoStreams) ? data.videoStreams : []),
+      ];
+      const seen = new Set<string>();
+
+      for (const source of sources) {
+        const url = source?.url;
+        const mime = String(source?.type || source?.mimeType || source?.mime || "").toLowerCase();
+        const isVideo = mime.includes("video/") || mime.includes("video") || source?.qualityLabel || source?.quality;
+        const isMp4 = mime.includes("video/mp4") || /\.mp4(?:$|[?&])/i.test(url || "") || source?.container === "mp4" || source?.format === "MPEG-4";
+        if (url && isVideo && isMp4 && !seen.has(url)) {
+          seen.add(url);
+          streams.push({
+            server: "Invidious MP4",
+            link: url,
+            type: "mp4",
+            quality: source.qualityLabel || source.quality || source.resolution || "Auto",
+          });
         }
       }
+
       if (streams.length > 0) return streams;
     } catch {
       // Try the next public instance.
     }
   }
+
   return [];
 };
 
