@@ -1,0 +1,9 @@
+{
+  "name": "vega-youtube-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.js"
+  }
+}
