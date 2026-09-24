@@ -5,5 +5,5 @@
   "description": "Custom YouTube extension for Vega App",
   "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
   "manifestVersion": 1,
-  "main": "index.js"
+  "main": "./index.js"
 }
