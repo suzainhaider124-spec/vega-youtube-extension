@@ -1,0 +1,7 @@
+{
+  "display_name": "YouTube Provider",
+  "value": "youtube-provider",
+  "version": "1.0.1",
+  "type": "global",
+  "disabled": false
+}

@@ -1,7 +1,10 @@
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 
-await mkdir("dist", { recursive: true });
-await cp("src", "dist/src", { recursive: true });
-await writeFile("dist/index.js", await readFile("index.js"));
-await writeFile("dist/manifest.json", await readFile("manifest.json"));
-console.log("Built Vega YouTube extension in dist/");
+await rm("dist", { recursive: true, force: true });
+await mkdir("dist/youtube-provider", { recursive: true });
+
+for (const name of ["catalog", "posts", "meta", "stream"]) {
+  await cp(`dist-source/youtube-provider/${name}.js`, `dist/youtube-provider/${name}.js`);
+}
+await cp("manifest.json", "dist/manifest.json");
+console.log("Built Vega provider files in dist/");
