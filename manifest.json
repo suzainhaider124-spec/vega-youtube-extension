@@ -1,9 +1,9 @@
-{
-  "id": "com.youtube.vega.extension",
-  "name": "YouTube Provider",
-  "version": "1.0.0",
-  "description": "Custom YouTube extension for Vega App",
-  "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
-  "manifestVersion": 1,
-  "main": "./index.js"
-}
+[
+  {
+    "display_name": "YouTube Provider",
+    "value": "youtube-provider",
+    "version": "1.0.0",
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
+    "description": "Custom YouTube provider for Vega App"
+  }
+]
