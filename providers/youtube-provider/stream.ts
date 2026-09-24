@@ -1,6 +1,5 @@
 import { Stream, ProviderContext } from "../types";
-
-const API_BASE = "https://pipedapi.kavin.rocks";
+import { extractVideoId, fetchPipedJson } from "./piped";
 
 export const getStream = async function ({
   link,
@@ -13,22 +12,18 @@ export const getStream = async function ({
   providerContext: ProviderContext;
   isDownload?: boolean;
 }): Promise<Stream[]> {
-  const videoId = extractVideoId(link);
+  const videoId = extractVideoId(link || "");
   if (!videoId) return [];
 
-  const response = await providerContext.axios.get(
-    `${API_BASE}/streams/${encodeURIComponent(videoId)}`,
-    { signal },
-  );
-  const data = response.data || {};
+  const data = await fetchPipedJson(`/streams/${encodeURIComponent(videoId)}`, {}, providerContext, signal);
   const streams: Stream[] = [];
-  const hls = data.hls || data.hlsUrl;
+  const hls = data?.hls || data?.hlsUrl;
 
   if (typeof hls === "string" && /\.m3u8(?:$|\?)/i.test(hls)) {
     streams.push({ server: "Piped HLS", link: hls, type: "m3u8", quality: "Auto" });
   }
 
-  for (const source of Array.isArray(data.videoStreams) ? data.videoStreams : []) {
+  for (const source of Array.isArray(data?.videoStreams) ? data.videoStreams : []) {
     const mime = source.mimeType || source.mime || "";
     const isMp4 = source.format === "MPEG-4" || /video\/mp4/i.test(mime) || /\.mp4(?:$|\?)/i.test(source.url || "");
     if (isMp4 && source.url) {
@@ -40,15 +35,6 @@ export const getStream = async function ({
       });
     }
   }
+
   return streams;
 };
-
-function extractVideoId(value = "") {
-  if (!value.includes("/") && !value.includes("?")) return value;
-  try {
-    const url = new URL(value, "https://www.youtube.com");
-    return url.searchParams.get("v") || url.pathname.split("/").filter(Boolean).pop() || "";
-  } catch {
-    return value.replace(/^\/watch\?v=/, "").split("&")[0];
-  }
-}

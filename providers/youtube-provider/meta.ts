@@ -1,4 +1,5 @@
 import { Info, ProviderContext } from "../types";
+import { extractVideoId, fetchPipedJson } from "./piped";
 
 export const getMeta = async function ({
   link,
@@ -7,20 +8,22 @@ export const getMeta = async function ({
   link: string;
   providerContext: ProviderContext;
 }): Promise<Info> {
-  const id = link.includes("/") ? link.split("/").filter(Boolean).pop() || link : link;
+  const id = extractVideoId(link) || link;
+  if (!id) {
+    throw new Error("Missing video id for YouTube metadata lookup");
+  }
+
   let title = "YouTube video";
   let image = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
   let synopsis = "";
 
   try {
-    const response = await providerContext.axios.get(
-      `https://pipedapi.kavin.rocks/streams/${encodeURIComponent(id)}`,
-    );
-    title = response.data?.title || title;
-    image = response.data?.thumbnailUrl || image;
-    synopsis = response.data?.description || "";
+    const data = await fetchPipedJson(`/streams/${encodeURIComponent(id)}`, {}, providerContext);
+    title = data?.title || title;
+    image = data?.thumbnailUrl || image;
+    synopsis = data?.description || "";
   } catch {
-    // Search results and playback remain usable when metadata is unavailable.
+    // fallback to basic metadata if upstream is unavailable
   }
 
   return {
