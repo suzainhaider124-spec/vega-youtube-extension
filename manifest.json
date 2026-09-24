@@ -2,7 +2,7 @@
   {
     "display_name": "YouTube Provider",
     "value": "youtube-provider",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
     "description": "Custom YouTube provider for Vega App",
     "type": "global",
