@@ -1,5 +1,10 @@
 import { Post, ProviderContext } from "../types";
-import { extractVideoId, fetchPipedJson, formatDuration } from "./piped";
+
+const DEMO_VIDEO = {
+  title: "Sample YouTube Video",
+  link: "dQw4w9WgXcQ",
+  image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+};
 
 export const getPosts = async function ({
   filter,
@@ -14,13 +19,15 @@ export const getPosts = async function ({
   signal: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  return getSearchPosts({
-    searchQuery: "YouTube",
-    page,
-    providerValue,
-    signal,
-    providerContext,
-  });
+  return [
+    {
+      title: DEMO_VIDEO.title,
+      link: DEMO_VIDEO.link,
+      image: DEMO_VIDEO.image,
+      provider: providerValue || "youtube-provider",
+      tag: "YouTube Demo",
+    },
+  ];
 };
 
 export const getSearchPosts = async function ({
@@ -36,33 +43,11 @@ export const getSearchPosts = async function ({
   signal: AbortSignal;
   providerContext: ProviderContext;
 }): Promise<Post[]> {
-  if (!searchQuery?.trim()) return [];
-
-  const data = await fetchPipedJson(
-    "/search",
-    {
-      q: searchQuery.trim(),
-      filter: "videos",
-      page: Math.max(page || 1, 1),
-    },
-    providerContext,
+  return getPosts({
+    filter: "latest",
+    page,
+    providerValue,
     signal,
-  );
-
-  const items = Array.isArray(data) ? data : data?.items;
-  if (!Array.isArray(items)) return [];
-
-  return items
-    .map((item: any): Post => {
-      const id = item.videoId || item.id || extractVideoId(item.url || "");
-      return {
-        title: item.title || "Untitled video",
-        link: id,
-        image: item.thumbnail || item.thumbnailUrl || "",
-        provider: providerValue || "youtube-provider",
-        tag: item.uploaderName || item.uploader || "YouTube",
-        cornerTag: item.duration ? formatDuration(item.duration) : undefined,
-      };
-    })
-    .filter((item: Post) => Boolean(item.link));
+    providerContext,
+  });
 };

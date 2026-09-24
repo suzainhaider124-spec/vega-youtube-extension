@@ -1,5 +1,5 @@
 export const catalog = [
-  { title: "YouTube Videos", filter: "youtube" },
+  { title: "Latest YouTube Videos", filter: "latest" },
 ];
 
 export const genres = [];
