@@ -1,12 +1,3 @@
-async function getStream() {
-  return [
-    {
-      server: "Demo MP4",
-      link: "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
-      type: "mp4",
-      quality: "720p",
-    },
-  ];
-}
-
-exports.getStream = getStream;
+const INSTANCES=["https://inv.nadeko.net","https://invidious.nerdvpn.de","https://yt.chocolatemoo53.com","https://invidious.tiekoetter.com","https://invidious.f5.si"];
+function id(value=""){if(!value.includes("/")&&!value.includes("?"))return value;try{const url=new URL(value,"https://www.youtube.com");return url.searchParams.get("v")||url.pathname.split("/").filter(Boolean).pop()||"";}catch{return value.replace(/^\/watch\?v=/,"").split("&")[0];}}
+async function getStream({link,signal,providerContext}){const videoId=id(link);for(const host of INSTANCES){try{const data=(await providerContext.axios.get(`${host}/api/v1/videos/${encodeURIComponent(videoId)}`,{signal,timeout:15000})).data||{};const streams=[];if(data.hlsUrl)streams.push({server:"Invidious HLS",link:data.hlsUrl,type:"m3u8",quality:"Auto"});for(const source of Array.isArray(data.formatStreams)?data.formatStreams:[])if(source.url&&(source.type||"").toLowerCase().includes("video/mp4"))streams.push({server:"Invidious MP4",link:source.url,type:"mp4",quality:source.qualityLabel||source.quality||"Auto"});if(streams.length)return streams;}catch{}}return[];}exports.getStream=getStream;

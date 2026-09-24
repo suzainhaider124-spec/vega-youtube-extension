@@ -1,18 +1,8 @@
-async function getPosts({ filter, page = 1, providerValue }) {
-  return [
-    {
-      title: "Sample YouTube Video",
-      link: "dQw4w9WgXcQ",
-      image: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-      provider: providerValue || "youtube-provider",
-      tag: "YouTube Demo",
-    },
-  ];
-}
-
-async function getSearchPosts(args) {
-  return getPosts(args);
-}
-
-exports.getPosts = getPosts;
-exports.getSearchPosts = getSearchPosts;
+const INSTANCES=["https://inv.nadeko.net","https://invidious.nerdvpn.de","https://yt.chocolatemoo53.com","https://invidious.tiekoetter.com","https://invidious.f5.si"];
+const catalog=[{title:"YouTube Videos",filter:"youtube"}],genres=[];
+async function request(path,params,providerContext,signal){let error;for(const host of INSTANCES){try{const response=await providerContext.axios.get(`${host}${path}`,{params,signal,timeout:15000});if(response&&response.data!==undefined)return response.data;}catch(current){error=current;}}throw error||new Error("All Invidious instances failed");}
+function id(value=""){if(!value.includes("/")&&!value.includes("?"))return value;try{const url=new URL(value,"https://www.youtube.com");return url.searchParams.get("v")||url.pathname.split("/").filter(Boolean).pop()||"";}catch{return value.replace(/^\/watch\?v=/,"").split("&")[0];}}
+function duration(seconds){const value=Number(seconds);return Number.isFinite(value)?`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,"0")}`:undefined;}
+async function getSearchPosts({searchQuery,page=1,signal,providerContext,providerValue}){if(!searchQuery?.trim())return[];try{const data=await request("/api/v1/search",{q:searchQuery.trim(),type:"video",page:Math.max(page,1)},providerContext,signal);return(Array.isArray(data)?data:[]).filter(item=>item?.type==="video"&&item.videoId).map(item=>({title:item.title||"Untitled video",link:item.videoId,image:item.videoThumbnails?.[0]?.url||`https://i.ytimg.com/vi/${item.videoId}/hqdefault.jpg`,provider:providerValue||"youtube-provider",tag:item.author||"YouTube",cornerTag:item.lengthSeconds?duration(item.lengthSeconds):undefined}));}catch{return[];}}
+async function getPosts(args){return getSearchPosts({ ...args,searchQuery:"latest YouTube videos" });}
+exports.catalog=catalog;exports.genres=genres;exports.getPosts=getPosts;exports.getSearchPosts=getSearchPosts;

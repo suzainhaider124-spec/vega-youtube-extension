@@ -1,4 +1,4 @@
-const catalog = [{ title: "Latest YouTube Videos", filter: "latest" }];
+const catalog = [{ title: "YouTube Videos", filter: "youtube" }];
 const genres = [];
 exports.catalog = catalog;
 exports.genres = genres;

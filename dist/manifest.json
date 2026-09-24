@@ -2,9 +2,9 @@
   {
     "display_name": "YouTube Provider",
     "value": "youtube-provider",
-    "version": "1.0.4",
+    "version": "1.1.0",
     "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
-    "description": "Working demo provider for Vega App",
+    "description": "YouTube provider using public Invidious instances",
     "type": "global",
     "disabled": false
   }
