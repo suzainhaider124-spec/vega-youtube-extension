@@ -2,9 +2,9 @@
   {
     "display_name": "YouTube Provider",
     "value": "youtube-provider",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "icon": "https://upload.wikimedia.org/wikipedia/commons/e/ef/YouTube_logo_2015.svg",
-    "description": "YouTube provider using public Invidious instances",
+    "description": "YouTube provider using Piped and Invidious stream fallbacks",
     "type": "global",
     "disabled": false
   }

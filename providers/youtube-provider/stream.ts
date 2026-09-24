@@ -1,11 +1,10 @@
 import { Stream, ProviderContext } from "../types";
 
-const INVIDIOUS_INSTANCES = [
+const ENDPOINTS = [
+  "https://pipedapi.adminforge.de",
+  "https://pipedapi.kavin.rocks",
   "https://inv.nadeko.net",
   "https://invidious.nerdvpn.de",
-  "https://yt.chocolatemoo53.com",
-  "https://invidious.tiekoetter.com",
-  "https://invidious.f5.si",
 ];
 
 export const getStream = async function ({
@@ -22,51 +21,61 @@ export const getStream = async function ({
   const videoId = extractVideoId(link);
   if (!videoId) return [];
 
-  for (const instance of INVIDIOUS_INSTANCES) {
+  for (const endpoint of ENDPOINTS) {
     try {
-      const response = await providerContext.axios.get(
-        `${instance}/api/v1/videos/${encodeURIComponent(videoId)}`,
+      const data = await providerContext.axios.get(
+        endpoint.includes("/api/v1")
+          ? `${endpoint}/videos/${encodeURIComponent(videoId)}`
+          : `${endpoint}/streams/${encodeURIComponent(videoId)}`,
         { signal, timeout: 15000 },
-      );
-      const data = response.data || {};
-      const streams: Stream[] = [];
+      ).then((response: any) => response.data || {});
 
-      const hls = data.hlsUrl || data.hls;
-      if (typeof hls === "string" && hls.length > 0) {
-        streams.push({ server: "Invidious HLS", link: hls, type: "m3u8", quality: "Auto" });
-      }
-
-      const sources = [
-        ...(Array.isArray(data.formatStreams) ? data.formatStreams : []),
-        ...(Array.isArray(data.adaptiveFormats) ? data.adaptiveFormats : []),
-        ...(Array.isArray(data.videoStreams) ? data.videoStreams : []),
-      ];
-      const seen = new Set<string>();
-
-      for (const source of sources) {
-        const url = source?.url;
-        const mime = String(source?.type || source?.mimeType || source?.mime || "").toLowerCase();
-        const isVideo = mime.includes("video/") || mime.includes("video") || source?.qualityLabel || source?.quality;
-        const isMp4 = mime.includes("video/mp4") || /\.mp4(?:$|[?&])/i.test(url || "") || source?.container === "mp4" || source?.format === "MPEG-4";
-        if (url && isVideo && isMp4 && !seen.has(url)) {
-          seen.add(url);
-          streams.push({
-            server: "Invidious MP4",
-            link: url,
-            type: "mp4",
-            quality: source.qualityLabel || source.quality || source.resolution || "Auto",
-          });
-        }
-      }
-
-      if (streams.length > 0) return streams;
+      const streams = normalizeStreams(data);
+      if (streams.length) return streams;
     } catch {
-      // Try the next public instance.
+      // Try the next extractor endpoint.
     }
   }
 
   return [];
 };
+
+function normalizeStreams(data: any): Stream[] {
+  const result: Stream[] = [];
+  const seen = new Set<string>();
+  const add = (url: unknown, type: string, quality: unknown, server: string) => {
+    if (typeof url !== "string" || !url.startsWith("http") || seen.has(url)) return;
+    seen.add(url);
+    result.push({
+      server,
+      link: url,
+      type,
+      quality: String(quality || "Auto"),
+    });
+  };
+
+  add(data.hlsUrl || data.hls, "m3u8", "Auto", "YouTube HLS");
+
+  const sources = [
+    ...(Array.isArray(data.videoStreams) ? data.videoStreams : []),
+    ...(Array.isArray(data.formatStreams) ? data.formatStreams : []),
+    ...(Array.isArray(data.adaptiveFormats) ? data.adaptiveFormats : []),
+  ];
+
+  for (const source of sources) {
+    const url = source?.url || source?.streamUrl;
+    const mime = String(source?.mimeType || source?.mime || source?.type || "").toLowerCase();
+    const container = String(source?.container || source?.format || "").toLowerCase();
+    const isVideo = mime.includes("video") || source?.quality || source?.qualityLabel || source?.resolution;
+    if (!isVideo) continue;
+    const isHls = /\.m3u8(?:$|[?&])/i.test(url || "") || mime.includes("mpegurl");
+    const isMp4 = /mp4|mpeg-4/.test(`${mime} ${container}`) || /\.mp4(?:$|[?&])/i.test(url || "");
+    if (isHls) add(url, "m3u8", source.qualityLabel || source.quality || source.resolution, "YouTube HLS");
+    else if (isMp4 || url) add(url, "mp4", source.qualityLabel || source.quality || source.resolution, "YouTube MP4");
+  }
+
+  return result;
+}
 
 function extractVideoId(value = "") {
   if (!value.includes("/") && !value.includes("?")) return value;
